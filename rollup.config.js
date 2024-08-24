@@ -16,17 +16,9 @@ const configs = createConfig({
 
 const mysConifgs = [
   {
-    input: 'yunzai-mys/index.ts',
-    file: 'yunzai-mys/index.js',
-    include: ['yunzai-mys/**/*'],
-    declaration: true,
-    declarationDir: 'yunzai-mys/types',
-    outDir: 'yunzai-mys/types'
-  },
-  {
-    input: 'yunzai-mys/src/middleware/message.ts',
-    file: 'yunzai-mys/message.js',
-    include: ['yunzai-mys/src/middleware/message.ts'],
+    input: 'src/middleware/message.ts',
+    file: 'lib/message.js',
+    include: ['src/middleware/message.ts'],
     declaration: false,
     declarationDir: undefined,
     outDir: undefined

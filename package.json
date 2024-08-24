@@ -50,12 +50,12 @@
   "types": "types",
   "exports": {
     ".": {
-      "import": "./index.js",
-      "types": "./types/index.d.ts"
+      "import": "./lib/index.js",
+      "types": "./lib/types/index.d.ts"
     },
     "./mw": {
-      "import": "./message.js",
-      "types": "./types/src/middleware/message.d.ts"
+      "import": "./lib/message.js",
+      "types": "./lib/types/src/middleware/message.d.ts"
     }
   },
   "keywords": [
