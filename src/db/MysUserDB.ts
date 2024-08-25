@@ -1,42 +1,5 @@
 import BaseModel from './BaseModel.js'
 
-const { Types } = BaseModel
-
-const COLUMNS = {
-  // 用户ID，qq为数字
-  ltuid: {
-    type: Types.INTEGER,
-    primaryKey: true
-  },
-
-  // MysUser类型，mys / hoyolab
-  type: {
-    type: Types.STRING,
-    defaultValue: 'mys',
-    notNull: true
-  },
-
-  // CK
-  ck: Types.STRING,
-  device: Types.STRING,
-  uids: {
-    type: Types.STRING,
-    get() {
-      let data = this.getDataValue('uids')
-      let ret = {}
-      try {
-        ret = JSON.parse(data)
-      } catch (e) {
-        ret = {}
-      }
-      return ret
-    },
-    set(uids) {
-      this.setDataValue('uids', JSON.stringify(uids))
-    }
-  }
-}
-
 class MysUserDB extends BaseModel {
   /**
    *
@@ -79,7 +42,40 @@ class MysUserDB extends BaseModel {
 }
 
 //
-BaseModel.initDB(MysUserDB, COLUMNS)
+BaseModel.initDB(MysUserDB, {
+  // 用户ID，qq为数字
+  ltuid: {
+    type: BaseModel.Types.INTEGER,
+    primaryKey: true
+  },
+
+  // MysUser类型，mys / hoyolab
+  type: {
+    type: BaseModel.Types.STRING,
+    defaultValue: 'mys',
+    notNull: true
+  },
+
+  // CK
+  ck: BaseModel.Types.STRING,
+  device: BaseModel.Types.STRING,
+  uids: {
+    type: BaseModel.Types.STRING,
+    get() {
+      let data = this.getDataValue('uids')
+      let ret = {}
+      try {
+        ret = JSON.parse(data)
+      } catch (e) {
+        ret = {}
+      }
+      return ret
+    },
+    set(uids) {
+      this.setDataValue('uids', JSON.stringify(uids))
+    }
+  }
+})
 
 //
 await MysUserDB.sync()

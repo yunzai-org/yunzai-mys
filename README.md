@@ -6,9 +6,7 @@ Yunzai 米游社通用接口模块
 
 使用了sequelize 和 sqlite 作为主要数据存储
 
-该模块的核心处理不基于`yunzai`模块
-
-适用于任何基于node.js环境的机器人
+当前版本必须安装`喵喵插件`才能使用
 
 ## 使用教程
 
@@ -40,7 +38,8 @@ Yunzai V3环境内置对其他插件指令的处理
 ```ts
 import { defineConfig } from 'yunzai'
 export default defineConfig({
-  middlewares: ['yunzai-mys/mw']
+  // 消息处理  + v3兼容中间件runtime
+  middlewares: ['yunzai-mys/message', 'yunzai-mys/runtime']
 })
 ```
 

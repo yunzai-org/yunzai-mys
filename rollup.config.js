@@ -18,8 +18,16 @@ const configs = createConfig({
 const mysConifgs = [
   {
     input: 'src/middleware/message.ts',
-    file: 'lib/message.js',
+    file: 'lib/middleware/message.js',
     include: ['src/middleware/message.ts'],
+    declaration: false,
+    declarationDir: undefined,
+    outDir: undefined
+  },
+  {
+    input: 'src/middleware/runtime.ts',
+    file: 'lib/middleware/runtime.js',
+    include: ['src/middleware/runtime.ts'],
     declaration: false,
     declarationDir: undefined,
     outDir: undefined

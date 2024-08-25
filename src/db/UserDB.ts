@@ -2,55 +2,6 @@ import BaseModel from './BaseModel.js'
 import lodash from 'lodash'
 import MysUtil from '../MysUtil.js'
 
-const { Types } = BaseModel
-
-const COLUMNS = {
-  // 用户ID，qq为数字
-  id: {
-    type: Types.STRING,
-    autoIncrement: false,
-    primaryKey: true
-  },
-
-  type: {
-    type: Types.STRING,
-    defaultValue: 'qq',
-    notNull: true
-  },
-
-  // 昵称
-  name: Types.STRING,
-
-  // 头像
-  face: Types.STRING,
-
-  ltuids: Types.STRING,
-  games: {
-    type: Types.STRING,
-    get() {
-      let data = this.getDataValue('games')
-      let ret = {}
-      try {
-        data = JSON.parse(data) || {}
-      } catch (e) {
-        data = {}
-      }
-      MysUtil.eachGame(game => {
-        let ds = data[game] || {}
-        ret[game] = {
-          uid: ds.uid || '',
-          data: ds.data || {}
-        }
-      })
-      return ret
-    },
-    set(data) {
-      this.setDataValue('games', JSON.stringify(data))
-    }
-  },
-  data: Types.STRING
-}
-
 class UserDB extends BaseModel {
   /**
    *
@@ -104,7 +55,52 @@ class UserDB extends BaseModel {
 }
 
 //
-BaseModel.initDB(UserDB, COLUMNS)
+BaseModel.initDB(UserDB, {
+  // 用户ID，qq为数字
+  id: {
+    type: BaseModel.Types.STRING,
+    autoIncrement: false,
+    primaryKey: true
+  },
+
+  type: {
+    type: BaseModel.Types.STRING,
+    defaultValue: 'qq',
+    notNull: true
+  },
+
+  // 昵称
+  name: BaseModel.Types.STRING,
+
+  // 头像
+  face: BaseModel.Types.STRING,
+
+  ltuids: BaseModel.Types.STRING,
+  games: {
+    type: BaseModel.Types.STRING,
+    get() {
+      let data = this.getDataValue('games')
+      let ret = {}
+      try {
+        data = JSON.parse(data) || {}
+      } catch (e) {
+        data = {}
+      }
+      MysUtil.eachGame(game => {
+        let ds = data[game] || {}
+        ret[game] = {
+          uid: ds.uid || '',
+          data: ds.data || {}
+        }
+      })
+      return ret
+    },
+    set(data) {
+      this.setDataValue('games', JSON.stringify(data))
+    }
+  },
+  data: BaseModel.Types.STRING
+})
 
 //
 await UserDB.sync()
