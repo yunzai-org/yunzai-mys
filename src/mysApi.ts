@@ -1,6 +1,5 @@
 import md5 from 'md5'
 import fetch from 'node-fetch'
-import { ConfigController as cfg } from 'yunzai'
 import apiTool from './apiTool.js'
 import { BOT_MYS_GENSHIN } from './system.js'
 
@@ -110,6 +109,7 @@ export default class MysApi {
    * @param type
    * @param data
    * @param cached
+   * @param proxyAddress
    * @returns
    */
   async getData(type, data: any = {}, cached = false) {
@@ -309,7 +309,8 @@ export default class MysApi {
    * @returns
    */
   async getAgent() {
-    let proxyAddress = cfg.bot.proxyAddress
+    // 从数据库获取代理地址
+    let proxyAddress = await redis.get('mys:proxy:address')
     if (!proxyAddress) return null
     if (proxyAddress === 'http://0.0.0.0:0') return null
     if (!/os_|official/.test(this.server)) return null

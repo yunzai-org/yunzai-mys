@@ -1,8 +1,7 @@
 import { Sequelize, DataTypes, Model } from 'sequelize'
-import { SQLITE_DB_DIR } from 'yunzai'
 import { join } from 'path'
 import fs from 'fs'
-const dir = join(process.cwd(), `${SQLITE_DB_DIR}/data.db`)
+const dir = join(process.cwd(), `/data/db/data.db`)
 fs.mkdirSync(dir, { recursive: true })
 // TODO DB自定义
 const sequelize = new Sequelize({

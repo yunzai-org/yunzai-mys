@@ -1,4 +1,9 @@
-import { randomRange } from 'yunzai'
+import crypto from 'crypto'
+
+const randomRange = () => {
+  const randomBytes = crypto.randomBytes(32)
+  return randomBytes.toString('hex')
+}
 
 /**
  * 整合接口用于查询数据

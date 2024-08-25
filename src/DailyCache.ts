@@ -2,8 +2,6 @@ import moment from 'moment'
 import BaseModel from './BaseModel.js'
 import MysUtil from './MysUtil.js'
 import { BOT_ROOT_KEY } from './system.js'
-import { Redis } from 'yunzai'
-
 /**
  *
  */
@@ -58,7 +56,7 @@ export default class DailyCache extends BaseModel {
   }
 
   /**
-   * 内部方法：获取Redis表前缀
+   * 内部方法：获取redis表前缀
    * @param uid
    * @param game
    * @returns
@@ -94,7 +92,7 @@ export default class DailyCache extends BaseModel {
    * 删除过期的DailyCache
    */
   static async clearOutdatedData() {
-    let keys = await Redis.keys(`${BOT_ROOT_KEY}*`)
+    let keys = await redis.keys(`${BOT_ROOT_KEY}*`)
     const date = moment().format('MM-DD')
     const testReg = new RegExp(
       `^${BOT_ROOT_KEY}(mys|hoyolab|config)-\\d{2}-\\d{2}`
@@ -102,7 +100,7 @@ export default class DailyCache extends BaseModel {
     const todayReg = new RegExp(`^${BOT_ROOT_KEY}(mys|hoyolab|config)-${date}`)
     for (let key of keys) {
       if (testReg.test(key) && !todayReg.test(key)) {
-        await Redis.del(key)
+        await redis.del(key)
       }
     }
   }
@@ -142,7 +140,7 @@ export default class DailyCache extends BaseModel {
   /** ---- 基础方法 ---- **/
 
   /**
-   * 内部方法：获取Redis表key键值
+   * 内部方法：获取redis表key键值
    * @param key
    * @param sub
    * @returns
@@ -159,7 +157,7 @@ export default class DailyCache extends BaseModel {
    * 【基础数据结构】：Key-Value
    *
    * 每个key对应一个Value
-   * 使用Redis kv存储,所有操作需要指定表名
+   * 使用redis kv存储,所有操作需要指定表名
    *
    * **/
 
@@ -170,9 +168,9 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<void>}
    */
   async exTable(table, hasCount = false) {
-    await Redis.expire(this.getTableKey(table), EX)
+    await redis.expire(this.getTableKey(table), EX)
     if (hasCount) {
-      await Redis.expire(this.getTableKey(table, 'count'), EX)
+      await redis.expire(this.getTableKey(table, 'count'), EX)
     }
   }
 
@@ -182,8 +180,8 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<void>}
    */
   async empty(table) {
-    await Redis.del(this.getTableKey(table))
-    await Redis.del(this.getTableKey(table, 'count'))
+    await redis.del(this.getTableKey(table))
+    await redis.del(this.getTableKey(table, 'count'))
   }
 
   /**
@@ -194,7 +192,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<any|boolean>}
    */
   async kGet(table, key, decode = false) {
-    let value = await Redis.hGet(this.getTableKey(table), '' + key)
+    let value = await redis.hGet(this.getTableKey(table), '' + key)
     return DailyCache.decodeValue(value, decode)
   }
 
@@ -207,7 +205,7 @@ export default class DailyCache extends BaseModel {
    */
   async kSet(table, key, value) {
     value = DailyCache.encodeValue(value)
-    await Redis.hSet(this.getTableKey(table), '' + key, value)
+    await redis.hSet(this.getTableKey(table), '' + key, value)
     await this.exTable(this.getTableKey(table))
   }
 
@@ -218,7 +216,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<number>}
    */
   async kDel(table, key) {
-    return await Redis.hDel(this.getTableKey(table), '' + key)
+    return await redis.hDel(this.getTableKey(table), '' + key)
   }
 
   /**
@@ -229,7 +227,7 @@ export default class DailyCache extends BaseModel {
    */
   async get(table, decode = false) {
     const tableKey = this.getTableKey(table)
-    let value = await Redis.get(tableKey)
+    let value = await redis.get(tableKey)
     return DailyCache.decodeValue(value, decode)
   }
 
@@ -241,7 +239,7 @@ export default class DailyCache extends BaseModel {
    */
   async set(table, value) {
     value = DailyCache.encodeValue(value)
-    return await Redis.set(this.getTableKey(table), value, { EX })
+    return await redis.set(this.getTableKey(table), value, { EX })
   }
 
   /**
@@ -251,7 +249,7 @@ export default class DailyCache extends BaseModel {
    * 若重复item被添加，则会将item移至指定key对应List中
    *
    * 会自动统计每个list长度并排序
-   * 使用Redis sorted map存储，所有操作需要指定表名
+   * 使用redis sorted map存储，所有操作需要指定表名
    *
    * **/
 
@@ -264,12 +262,12 @@ export default class DailyCache extends BaseModel {
    */
   async zAdd(table, key, item) {
     const tableKey = this.getTableKey(table)
-    await Redis.zAdd(tableKey, { score: key, value: item + '' })
+    await redis.zAdd(tableKey, { score: key, value: item + '' })
 
     // 同时更新数量，用于数量统计
     let count = (await this.zCount(table, key)) || 0
     const countKey = this.getTableKey(table, 'count')
-    await Redis.zAdd(countKey, { score: count, value: key + '' })
+    await redis.zAdd(countKey, { score: count, value: key + '' })
     await this.exTable(this.getTableKey(table), true)
   }
 
@@ -281,7 +279,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<Array<ConvertArgumentType<string | Buffer, string>>>}
    */
   async zList(table, key) {
-    return await Redis.zRangeByScore(this.getTableKey(table), key, key)
+    return await redis.zRangeByScore(this.getTableKey(table), key, key)
   }
 
   /**
@@ -291,7 +289,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<number>}
    */
   async zKey(table, item) {
-    return await Redis.zScore(this.getTableKey(table), item + '')
+    return await redis.zScore(this.getTableKey(table), item + '')
   }
 
   /**
@@ -301,7 +299,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<number>} 长度值
    */
   async zCount(table, key) {
-    return await Redis.zCount(this.getTableKey(table), key, key)
+    return await redis.zCount(this.getTableKey(table), key, key)
   }
 
   /**
@@ -311,7 +309,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<string>}
    */
   async zMinKey(table) {
-    let keys = await Redis.zRangeByScore(
+    let keys = await redis.zRangeByScore(
       this.getTableKey(table, 'count'),
       0,
       60
@@ -332,9 +330,9 @@ export default class DailyCache extends BaseModel {
     // 将count标记为99次，记录并防止被后续分配
     const countKey = this.getTableKey(table, 'count')
     if (delCount) {
-      await Redis.zRem(countKey, key)
+      await redis.zRem(countKey, key)
     } else {
-      await Redis.zAdd(countKey, { score: 99, value: key })
+      await redis.zAdd(countKey, { score: 99, value: key })
     }
   }
 
@@ -344,7 +342,7 @@ export default class DailyCache extends BaseModel {
    * @returns {Promise<Array<ConvertArgumentType<string | Buffer, string>>>}
    */
   async zGetDisableKey(table) {
-    return await Redis.zRangeByScore(this.getTableKey(table, 'count'), 99, 99)
+    return await redis.zRangeByScore(this.getTableKey(table, 'count'), 99, 99)
   }
 
   // 删除某个key
@@ -362,8 +360,8 @@ export default class DailyCache extends BaseModel {
   async zDel(table, key, delCount = false) {
     // 删除key对应list所有记录
     key = key + ''
-    let check = Redis.zScore(this.getTableKey(table, 'count'), key)
-    await Redis.zRemRangeByScore(this.getTableKey(table), key, key)
+    let check = redis.zScore(this.getTableKey(table, 'count'), key)
+    await redis.zRemRangeByScore(this.getTableKey(table), key, key)
     await this.zDisableKey(table, key, delCount)
     return !!check
   }
@@ -375,6 +373,6 @@ export default class DailyCache extends BaseModel {
    */
   async zStat(table) {
     const countKey = this.getTableKey(table, 'count')
-    return await Redis.zRangeByScoreWithScores(countKey, 0, 100)
+    return await redis.zRangeByScoreWithScores(countKey, 0, 100)
   }
 }
