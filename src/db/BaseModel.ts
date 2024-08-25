@@ -1,8 +1,8 @@
 import { Sequelize, DataTypes, Model } from 'sequelize'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import fs from 'fs'
 const dir = join(process.cwd(), `/data/db/data.db`)
-fs.mkdirSync(dir, { recursive: true })
+fs.mkdirSync(dirname(dir), { recursive: true })
 // TODO DB自定义
 const sequelize = new Sequelize({
   dialect: 'sqlite',

@@ -1,6 +1,6 @@
 {
   "name": "yunzai-mys",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "Le-niao",
   "description": "QQ Group Bot",
   "main": "./index.js",
