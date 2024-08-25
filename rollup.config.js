@@ -7,6 +7,7 @@ const configs = createConfig({
     typescript({
       compilerOptions: {
         declaration: true,
+        removeComments: false, // 确保注释不被移除
         declarationDir: 'lib/types'
       },
       include: ['src/**/*']
@@ -29,13 +30,15 @@ const mysConifgs = [
     output: {
       file: item.file,
       format: 'es',
-      sourcemap: false
+      sourcemap: false,
+      banner: '/* eslint-disable */'
     },
     plugins: [
       typescript({
         compilerOptions: {
           declaration: item.declaration,
           declarationDir: item.declarationDir,
+          removeComments: false, // 确保注释不被移除
           outDir: item.outDir
         },
         include: item.include,

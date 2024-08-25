@@ -9,6 +9,4 @@ node_modules
 /lib
 yarn.lock
 
-
-index.js
-message.js
+yunzai-mys-*
