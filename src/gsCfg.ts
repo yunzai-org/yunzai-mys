@@ -3,33 +3,15 @@ import chokidar from 'chokidar'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs'
 import lodash from 'lodash'
 import NoteUser from './NoteUser.js'
-import { join } from 'node:path'
+// import { join } from 'node:path'
 
 /**
- * tudo
- * 彻底完成mys独立
- */
-
-/**
- * 动态加载喵喵模块
- */
-const dir = join(process.cwd(), './plugins/miao-plugin/models/index.js')
-let { Character, Weapon }: any = {}
-if (existsSync(dir)) {
-  const { Character: C, Weapon: W } = await import(`file://${dir}`)
-  Character = C
-  Weapon = W
-}
-
-/**
- * ***********
  * 配置文件
- * ***********
  */
-class GsCfg {
+export class MysCfg {
+  isSr = false
   nameID: typeof Map.prototype | false = new Map()
   sr_nameID: typeof Map.prototype | false = new Map()
-  isSr = false
   /** 默认设置 */
   defSetPath = './plugins/genshin/defSet/'
   defSet = {}
@@ -38,6 +20,7 @@ class GsCfg {
   config = {}
   /** 监听文件 */
   watcher = { config: {}, defSet: {} }
+  /** * 忽略配置  */
   ignore = ['mys.pubCk', 'gacha.set', 'bot.help', 'role.name']
 
   /**
@@ -136,12 +119,9 @@ class GsCfg {
   }
 
   /**
-   * tudo
-   * 读取所有用户绑定的ck
-   * @param game
-   * @returns
+   *
    */
-  async getBingCk(game = 'gs') {
+  getBingCk = async (game = 'gs') => {
     let ck = {}
     let ckQQ = {}
     let noteCk = {}
@@ -163,37 +143,6 @@ class GsCfg {
       noteCk[qq] = tmp
     })
     return { ck, ckQQ, noteCk }
-  }
-
-  /**
-   * 原神角色id转换角色名字
-   * @param id
-   * @returns
-   */
-  roleIdToName(id) {
-    let char = Character.get(id)
-    return char?.name || ''
-  }
-
-  /**
-   * 原神角色别名转id
-   * @param keyword
-   * @param isSr
-   * @returns
-   */
-  roleNameToID(keyword, isSr) {
-    const char = Character.get(keyword, isSr ? 'sr' : 'gs')
-    return char?.id || false
-  }
-
-  /**
-   * 原神角色武器长名称缩写
-   * @param name 名称
-   * @param isWeapon 是否武器
-   */
-  shortName(name, isWeapon = false) {
-    const obj = (isWeapon ? Weapon : Character).get(name)
-    return obj.abbr || obj.name || ''
   }
 
   /**
@@ -223,46 +172,6 @@ class GsCfg {
 
   /**
    *
-   * @param msg
-   * @returns
-   */
-  getMsgUid(msg) {
-    const ret = /([1-9]|18)[0-9]{8}/g.exec(msg)
-    if (!ret) return false
-    return ret[0]
-  }
-
-  /**
-   * 获取消息内原神角色名称，uid
-   * @param msg 判断消息
-   * @param filterMsg 过滤消息
-   * @return roleId 角色id
-   * @return name 角色名称
-   * @return alias 当前别名
-   * @return uid 游戏uid
-   */
-  getRole(msg, filterMsg = '', isSr = false) {
-    let alias = msg.replace(/#|老婆|老公|([1-9]|18)[0-9]{8}/g, '').trim()
-    if (filterMsg) {
-      alias = alias.replace(new RegExp(filterMsg, 'g'), '').trim()
-    }
-    this.isSr = isSr
-    let char = Character.get(alias, isSr ? 'sr' : 'gs')
-    if (!char) {
-      return false
-    }
-    let uid = this.getMsgUid(msg) || ''
-    return {
-      roleId: char.id,
-      uid,
-      alias,
-      game: char.game,
-      name: char.name
-    }
-  }
-
-  /**
-   *
    * @param app
    * @param name
    */
@@ -273,90 +182,6 @@ class GsCfg {
     let set = `./plugins/genshin/config/${app}.${name}.yaml`
     if (!existsSync(set)) {
       copyFileSync(`./plugins/genshin/defSet/${app}/${name}.yaml`, set)
-    }
-  }
-
-  /**
-   * 仅供内部调用
-   * @returns
-   */
-  _getAbbr() {
-    if (this[this.isSr ? 'sr_nameID' : 'nameID']) return
-
-    this.nameID = new Map()
-    this.sr_nameID = new Map()
-
-    let nameArr = this.getdefSet('role', 'name')
-    let sr_nameArr = this.getdefSet('role', 'sr_name')
-    let nameArrUser = this.getConfig('role', 'name')
-
-    let nameID = {}
-
-    for (let i in nameArr) {
-      nameID[nameArr[i][0]] = i
-      for (let abbr of nameArr[i]) {
-        this.nameID.set(String(abbr), i)
-      }
-    }
-
-    for (let i in sr_nameArr) {
-      nameID[sr_nameArr[i][0]] = i
-      for (let abbr of sr_nameArr[i]) {
-        this.sr_nameID.set(String(abbr), i)
-      }
-    }
-
-    for (let i in nameArrUser) {
-      for (let abbr of nameArrUser[i]) {
-        this.nameID.set(String(abbr), nameID[i])
-      }
-    }
-  }
-
-  /**
-   * 仅供内部调用
-   * @param keyword
-   * @param isSr
-   * @returns
-   */
-  _roleNameToID(keyword, isSr?: boolean) {
-    if (isSr) this.isSr = isSr
-    if (!isNaN(keyword)) keyword = Number(keyword)
-    this._getAbbr()
-    const key = this.isSr ? 'sr_nameID' : 'nameID'
-    if (typeof this[key] != 'boolean') {
-      let roelId = this[key].get(String(keyword))
-      return roelId || false
-    }
-    return false
-  }
-
-  /**
-   * 仅供内部调用
-   * @param msg
-   * @param filterMsg
-   * @param isSr
-   * @returns
-   */
-  _getRole(msg, filterMsg = '', _ = false) {
-    let alias = msg.replace(/#|老婆|老公|([1-9]|18)[0-9]{8}/g, '').trim()
-    if (filterMsg) {
-      alias = alias.replace(new RegExp(filterMsg, 'g'), '').trim()
-    }
-    /**
-     * 判断是否命中别名
-     */
-    let roleId = this._roleNameToID(alias)
-    if (!roleId) return false
-    /**
-     * 获取uid
-     */
-    let uid = this.getMsgUid(msg) || ''
-    return {
-      roleId,
-      uid,
-      alias,
-      name: this.roleIdToName(roleId)
     }
   }
 
@@ -454,6 +279,192 @@ class GsCfg {
   getAbbr() {
     logger.info('gsCfg.getAbbr() 已经废弃')
   }
+
+  /**
+   *
+   * @param msg
+   * @returns
+   */
+  getMsgUid(msg) {
+    const ret = /([1-9]|18)[0-9]{8}/g.exec(msg)
+    if (!ret) return false
+    return ret[0]
+  }
+
+  /**
+   * 仅供内部调用
+   * @returns
+   */
+  _getAbbr() {
+    if (this[this.isSr ? 'sr_nameID' : 'nameID']) return
+
+    this.nameID = new Map()
+    this.sr_nameID = new Map()
+
+    let nameArr = this.getdefSet('role', 'name')
+    let sr_nameArr = this.getdefSet('role', 'sr_name')
+    let nameArrUser = this.getConfig('role', 'name')
+
+    let nameID = {}
+
+    for (let i in nameArr) {
+      nameID[nameArr[i][0]] = i
+      for (let abbr of nameArr[i]) {
+        this.nameID.set(String(abbr), i)
+      }
+    }
+
+    for (let i in sr_nameArr) {
+      nameID[sr_nameArr[i][0]] = i
+      for (let abbr of sr_nameArr[i]) {
+        this.sr_nameID.set(String(abbr), i)
+      }
+    }
+
+    for (let i in nameArrUser) {
+      for (let abbr of nameArrUser[i]) {
+        this.nameID.set(String(abbr), nameID[i])
+      }
+    }
+  }
+
+  /**
+   * 仅供内部调用
+   * @param keyword
+   * @param isSr
+   * @returns
+   */
+  _roleNameToID(keyword, isSr?: boolean) {
+    if (isSr) this.isSr = isSr
+    if (!isNaN(keyword)) keyword = Number(keyword)
+    this._getAbbr()
+    const key = this.isSr ? 'sr_nameID' : 'nameID'
+    if (typeof this[key] != 'boolean') {
+      let roelId = this[key].get(String(keyword))
+      return roelId || false
+    }
+    return false
+  }
 }
 
-export default new GsCfg()
+// /**
+//  * tudo
+//  * 被喵喵污染了的方法
+//  * 可使用MysCfg代替
+//  */
+// class GsCfg extends MysCfg {
+//   Weapon: any = null
+//   Character: any = null
+
+//   async init() {
+//     /**
+//      * 动态加载喵喵模块
+//      */
+//     const dir = join(process.cwd(), './plugins/miao-plugin/models/index.js')
+//     if (existsSync(dir)) {
+//       const { Character: C, Weapon: W } = await import(`file://${dir}`)
+//       this.Character = C
+//       this.Weapon = W
+//     }
+//   }
+
+//   /**
+//    *
+//    */
+//   constructor() {
+//     super()
+//     // init
+//     this.init()
+//   }
+
+//   /**
+//    * 原神角色武器长名称缩写
+//    * @param name 名称
+//    * @param isWeapon 是否武器
+//    */
+//   shortName(name, isWeapon = false) {
+//     const obj = (isWeapon ? this.Weapon : this.Character).get(name)
+//     return obj.abbr || obj.name || ''
+//   }
+
+//   /**
+//    * 获取消息内原神角色名称，uid
+//    * @param msg 判断消息
+//    * @param filterMsg 过滤消息
+//    * @return roleId 角色id
+//    * @return name 角色名称
+//    * @return alias 当前别名
+//    * @return uid 游戏uid
+//    */
+//   getRole(msg, filterMsg = '', isSr = false) {
+//     let alias = msg.replace(/#|老婆|老公|([1-9]|18)[0-9]{8}/g, '').trim()
+//     if (filterMsg) {
+//       alias = alias.replace(new RegExp(filterMsg, 'g'), '').trim()
+//     }
+//     this.isSr = isSr
+//     let char = this.Character.get(alias, isSr ? 'sr' : 'gs')
+//     if (!char) {
+//       return false
+//     }
+//     let uid = this.getMsgUid(msg) || ''
+//     return {
+//       roleId: char.id,
+//       uid,
+//       alias,
+//       game: char.game,
+//       name: char.name
+//     }
+//   }
+
+//   /**
+//    * 原神角色id转换角色名字
+//    * @param id
+//    * @returns
+//    */
+//   roleIdToName(id) {
+//     let char = this.Character.get(id)
+//     return char?.name || ''
+//   }
+
+//   /**
+//    * 原神角色别名转id
+//    * @param keyword
+//    * @param isSr
+//    * @returns
+//    */
+//   roleNameToID(keyword, isSr) {
+//     const char = this.Character.get(keyword, isSr ? 'sr' : 'gs')
+//     return char?.id || false
+//   }
+
+//   /**
+//    * 仅供内部调用
+//    * @param msg
+//    * @param filterMsg
+//    * @param isSr
+//    * @returns
+//    */
+//   _getRole(msg, filterMsg = '', _ = false) {
+//     let alias = msg.replace(/#|老婆|老公|([1-9]|18)[0-9]{8}/g, '').trim()
+//     if (filterMsg) {
+//       alias = alias.replace(new RegExp(filterMsg, 'g'), '').trim()
+//     }
+//     /**
+//      * 判断是否命中别名
+//      */
+//     let roleId = this._roleNameToID(alias)
+//     if (!roleId) return false
+//     /**
+//      * 获取uid
+//      */
+//     let uid = this.getMsgUid(msg) || ''
+//     return {
+//       roleId,
+//       uid,
+//       alias,
+//       name: this.roleIdToName(roleId)
+//     }
+//   }
+// }
+
+export default new MysCfg()

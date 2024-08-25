@@ -1,18 +1,13 @@
 // Data.forEach
 import * as Data from './utils/Data.js'
 
-/**
- *
- */
 const games = [
   { key: 'gs', name: '原神' },
-  { key: 'sr', name: '星穹铁道' }
+  { key: 'sr', name: '星穹铁道' },
+  { key: 'zzz', name: '绝区零' }
 ]
 
-/**
- *
- */
-export default {
+class MysUtil {
   /**
    * 获取标准ltuid
    * @param data
@@ -30,7 +25,7 @@ export default {
       return testRet[1]
     }
     return false
-  },
+  }
 
   /**
    * 获取标准gameKey
@@ -43,7 +38,7 @@ export default {
       return game.isSr ? 'sr' : 'gs'
     }
     return ['sr', 'star'].includes(game) ? 'sr' : 'gs'
-  },
+  }
 
   /**
    * 生成设备guid
@@ -68,7 +63,7 @@ export default {
       S4() +
       S4()
     )
-  },
+  }
 
   /**
    * 循环game
@@ -78,7 +73,7 @@ export default {
     await Data.forEach(games, ds => {
       return fn(ds.key, ds)
     })
-  },
+  }
 
   /**
    * 循环server
@@ -88,3 +83,5 @@ export default {
     await Data.forEach(['mys', 'hoyolab'], fn)
   }
 }
+
+export default new MysUtil()

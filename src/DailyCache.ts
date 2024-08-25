@@ -21,6 +21,9 @@ const EX = 3600 * 24
  *
  */
 export default class DailyCache extends BaseModel {
+  /**
+   *
+   */
   keyPre = null
 
   /**
