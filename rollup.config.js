@@ -1,63 +1,44 @@
-import typescript from '@rollup/plugin-typescript'
-import { defineConfig as createConfig } from 'yunzai/rollup'
 import { defineConfig } from 'rollup'
-
-const configs = createConfig({
-  plugins: [
-    typescript({
-      compilerOptions: {
-        declaration: true,
-        removeComments: false, // 确保注释不被移除
-        declarationDir: 'lib/types'
-      },
-      include: ['src/**/*']
-    })
-  ]
-})
-
-const mysConifgs = [
+import typescript from '@rollup/plugin-typescript'
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
+import alias from '@rollup/plugin-alias'
+import dts from 'rollup-plugin-dts'
+import { Options } from 'yunzai/rollup'
+export default defineConfig([
   {
-    input: 'src/middleware/message.ts',
-    file: 'lib/middleware/message.js',
-    include: ['src/middleware/message.ts'],
-    declaration: false,
-    declarationDir: undefined,
-    outDir: undefined
-  },
-  {
-    input: 'src/middleware/runtime.ts',
-    file: 'lib/middleware/runtime.js',
-    include: ['src/middleware/runtime.ts'],
-    declaration: false,
-    declarationDir: undefined,
-    outDir: undefined
-  }
-].map(item => {
-  return {
-    input: item.input,
-    output: {
-      file: item.file,
-      format: 'es',
-      sourcemap: false,
-      banner: '/* eslint-disable */'
-    },
+    ...Options,
     plugins: [
+      // 处理ts文件
       typescript({
         compilerOptions: {
-          declaration: item.declaration,
-          declarationDir: item.declarationDir,
-          removeComments: false, // 确保注释不被移除
-          outDir: item.outDir
+          outDir: 'lib'
         },
-        include: item.include,
-        exclude: ['node_modules']
+        include: ['src/**/*']
       })
-    ],
-    onwarn: (warning, warn) => {
-      if (warning.code === 'UNRESOLVED_IMPORT') return
-      warn(warning)
-    }
+    ]
+  },
+  {
+    ...Options,
+    plugins: [
+      // 处理别名
+      alias({
+        entries: [
+          {
+            find: '@',
+            replacement: resolve(dirname(fileURLToPath(import.meta.url)), 'src')
+          }
+        ]
+      }),
+      // 处理ts文件
+      typescript({
+        compilerOptions: {
+          outDir: 'lib'
+        },
+        include: ['src/**/*']
+      }),
+      // 所有的dts文件输出
+      dts()
+    ]
   }
-})
-
-export default defineConfig(mysConifgs.concat(configs))
+])
